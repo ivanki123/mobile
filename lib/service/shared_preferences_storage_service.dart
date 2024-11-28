@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled2/service/storage_service.dart';
+import 'storage_service.dart';
 
 class SharedPreferencesStorageService implements StorageService {
   @override
@@ -19,5 +19,12 @@ class SharedPreferencesStorageService implements StorageService {
   Future<String?> getPassword() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('user_password');
+  }
+
+  @override
+  Future<void> clearUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_email');
+    await prefs.remove('user_password');
   }
 }
