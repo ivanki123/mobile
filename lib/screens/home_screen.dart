@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:untitled2/service/quote_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,29 +7,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> quotes = [
-    "Віра в себе — початок будь-якого шляху.",
-    "Великі справи починаються з маленьких кроків.",
-    "Кожен день — це нова можливість.",
-    "Сьогодні найкращий день для початку.",
-    "Успіх — це результат наполегливості.",
-    "Мрії не працюють, якщо не працюєш ти.",
-    "Не бійтеся великих труднощів. Це шанс зробити щось велике.",
-    "Ніколи не здавайтеся, тому що кожен день — це нова можливість.",
-    "Все, що ви можете уявити, реально.",
-    "Час — це те, що ми найбільше цінуємо, і що ми витрачаємо найбільше."
-  ];
-
   final Map<int, String> cardQuotes = {};
+  final QuoteService _quoteService = QuoteService();
+  bool isLoading = false; // Стан завантаження
 
-  String getRandomQuote() {
-    final random = Random();
-    return quotes[random.nextInt(quotes.length)];
-  }
-
-  void setQuoteForCard(int index) {
+  // Встановлення цитати для картки
+  void setQuoteForCard(int index) async {
     setState(() {
-      cardQuotes[index] = getRandomQuote();
+      isLoading = true; // Встановлюємо стан завантаження
+    });
+
+    final quote = await _quoteService.fetchQuote();
+    setState(() {
+      cardQuotes[index] = quote;
+      isLoading = false; // Завершення завантаження
     });
   }
 
@@ -50,7 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator()) // Індикатор завантаження
+            : GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 16,
