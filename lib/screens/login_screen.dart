@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../service/shared_preferences_storage_service.dart';
+import '../service/storage_service.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final StorageService storageService = SharedPreferencesStorageService();
+
   Future<bool> loginUser(String email, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? storedEmail = prefs.getString('user_email');
-    String? storedPassword = prefs.getString('user_password');
+    String? storedEmail = await storageService.getEmail();
+    String? storedPassword = await storageService.getPassword();
 
     return email == storedEmail && password == storedPassword;
   }

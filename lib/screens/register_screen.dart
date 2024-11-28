@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled2/service/storage_service.dart';
+
+import '../service/shared_preferences_storage_service.dart';
 
 class RegisterScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final StorageService storageService = SharedPreferencesStorageService();  // Ініціалізуємо реалізацію
+
   Future<void> registerUser(String email, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_email', email);
-    await prefs.setString('user_password', password);
+    await storageService.saveUser(email, password);
   }
 
   @override
