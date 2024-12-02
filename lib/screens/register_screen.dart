@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
+import 'package:untitled2/service/storage_service.dart';
+
+import '../service/shared_preferences_storage_service.dart';
 
 class RegisterScreen extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController surnameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  final StorageService storageService = SharedPreferencesStorageService();  // Ініціалізуємо реалізацію
+
+  Future<void> registerUser(String email, String password) async {
+    await storageService.saveUser(email, password);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,47 +19,47 @@ class RegisterScreen extends StatelessWidget {
       appBar: AppBar(title: Text('Реєстрація')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              CustomTextField(
-                label: 'Ім\'я',
-                obscureText: false,
-                controller: nameController,
-              ),
-              SizedBox(height: 16),
-              CustomTextField(
-                label: 'Прізвище',
-                obscureText: false,
-                controller: surnameController,
-              ),
-              SizedBox(height: 16),
-              CustomTextField(
-                label: 'Email',
-                obscureText: false,
-                controller: emailController,
-              ),
-              SizedBox(height: 16),
-              CustomTextField(
-                label: 'Пароль',
-                obscureText: true,
-                controller: passwordController,
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/login');
-                },
-                child: Text('Зареєструватися'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Повернутися до входу'),
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              decoration: InputDecoration(labelText: 'Пароль'),
+              obscureText: true,
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                String email = emailController.text.trim();
+                String password = passwordController.text.trim();
+
+                if (email.isEmpty || !email.contains('@')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Некоректний Email!')),
+                  );
+                  return;
+                }
+                if (password.isEmpty || password.length < 6) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Пароль повинен бути довшим за 6 символів!')),
+                  );
+                  return;
+                }
+
+                await registerUser(email, password);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Реєстрація успішна!')),
+                );
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              child: Text('Зареєструватися'),
+            ),
+          ],
         ),
       ),
     );
