@@ -38,12 +38,14 @@ class RegisterScreen extends StatelessWidget {
                 String email = emailController.text.trim();
                 String password = passwordController.text.trim();
 
+                // Перевірка коректності email
                 if (email.isEmpty || !email.contains('@')) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Некоректний Email!')),
                   );
                   return;
                 }
+                // Перевірка паролю
                 if (password.isEmpty || password.length < 6) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Пароль повинен бути довшим за 6 символів!')),
@@ -51,6 +53,7 @@ class RegisterScreen extends StatelessWidget {
                   return;
                 }
 
+                // Реєстрація користувача
                 await registerUser(email, password);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Реєстрація успішна!')),

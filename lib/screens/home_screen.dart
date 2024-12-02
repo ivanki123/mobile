@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+
+import '../service/radio_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,79 +8,79 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> quotes = [
-    "Віра в себе — початок будь-якого шляху.",
-    "Великі справи починаються з маленьких кроків.",
-    "Кожен день — це нова можливість.",
-    "Сьогодні найкращий день для початку.",
-    "Успіх — це результат наполегливості.",
-    "Мрії не працюють, якщо не працюєш ти.",
-    "Не бійтеся великих труднощів. Це шанс зробити щось велике.",
-    "Ніколи не здавайтеся, тому що кожен день — це нова можливість.",
-    "Все, що ви можете уявити, реально.",
-    "Час — це те, що ми найбільше цінуємо, і що ми витрачаємо найбільше."
-  ];
+  final RadioStationService _radioStationService = RadioStationService(); // Ініціалізуємо сервіс для радіостанцій
+  bool isLoading = false; // Стан завантаження
+  List<RadioStation> stations = []; // Список радіостанцій
+  int numberOfStations = 5; // Кількість радіостанцій
 
-  final Map<int, String> cardQuotes = {};
-
-  String getRandomQuote() {
-    final random = Random();
-    return quotes[random.nextInt(quotes.length)];
-  }
-
-  void setQuoteForCard(int index) {
+  // Завантажуємо радіостанції
+  void loadRadioStations() async {
     setState(() {
-      cardQuotes[index] = getRandomQuote();
+      isLoading = true;
     });
+    try {
+      final List<RadioStation> fetchedStations = await _radioStationService.fetchRadioStations(numberOfStations);
+      setState(() {
+        stations = fetchedStations;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не вдалося завантажити радіостанції')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Головна сторінка'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            tooltip: 'Перейти до профілю',
-          ),
-        ],
+        title: Text('Радіостанції'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: 6, // Кількість карток
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                setQuoteForCard(index);
+        child: Column(
+          children: [
+            // Введення кількості радіостанцій
+            TextField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  numberOfStations = int.tryParse(value) ?? 5;
+                });
               },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    cardQuotes[index] ?? 'Картка ${index + 1}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+              decoration: InputDecoration(
+                labelText: 'Введіть кількість радіостанцій',
+                border: OutlineInputBorder(),
               ),
-            );
-          },
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: loadRadioStations,
+              child: Text('Завантажити радіостанції'),
+            ),
+            SizedBox(height: 20),
+            // Якщо ми в стані завантаження, показуємо індикатор
+            isLoading
+                ? Center(child: CircularProgressIndicator())
+                : Expanded(
+              child: ListView.builder(
+                itemCount: stations.length,
+                itemBuilder: (context, index) {
+                  final station = stations[index];
+                  return ListTile(
+                    title: Text(station.name),
+                    subtitle: Text('Країна: ${station.country}'),
+                    onTap: () {
+                      // Додаткові дії при натисканні на станцію
+                      print('Вибрана станція: ${station.name}');
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
