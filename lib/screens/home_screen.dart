@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:untitled2/service/quote_service.dart';
+
+import '../service/radio_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,72 +8,79 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Map<int, String> cardQuotes = {};
-  final QuoteService _quoteService = QuoteService();
+  final RadioStationService _radioStationService = RadioStationService(); // Ініціалізуємо сервіс для радіостанцій
   bool isLoading = false; // Стан завантаження
+  List<RadioStation> stations = []; // Список радіостанцій
+  int numberOfStations = 5; // Кількість радіостанцій
 
-  // Встановлення цитати для картки
-  void setQuoteForCard(int index) async {
+  // Завантажуємо радіостанції
+  void loadRadioStations() async {
     setState(() {
-      isLoading = true; // Встановлюємо стан завантаження
+      isLoading = true;
     });
-
-    final quote = await _quoteService.fetchQuote();
-    setState(() {
-      cardQuotes[index] = quote;
-      isLoading = false; // Завершення завантаження
-    });
+    try {
+      final List<RadioStation> fetchedStations = await _radioStationService.fetchRadioStations(numberOfStations);
+      setState(() {
+        stations = fetchedStations;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не вдалося завантажити радіостанції')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Головна сторінка'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            tooltip: 'Перейти до профілю',
-          ),
-        ],
+        title: Text('Радіостанції'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
-            ? Center(child: CircularProgressIndicator()) // Індикатор завантаження
-            : GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: 6, // Кількість карток
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                setQuoteForCard(index);
+        child: Column(
+          children: [
+            // Введення кількості радіостанцій
+            TextField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  numberOfStations = int.tryParse(value) ?? 5;
+                });
               },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    cardQuotes[index] ?? 'Картка ${index + 1}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+              decoration: InputDecoration(
+                labelText: 'Введіть кількість радіостанцій',
+                border: OutlineInputBorder(),
               ),
-            );
-          },
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: loadRadioStations,
+              child: Text('Завантажити радіостанції'),
+            ),
+            SizedBox(height: 20),
+            // Якщо ми в стані завантаження, показуємо індикатор
+            isLoading
+                ? Center(child: CircularProgressIndicator())
+                : Expanded(
+              child: ListView.builder(
+                itemCount: stations.length,
+                itemBuilder: (context, index) {
+                  final station = stations[index];
+                  return ListTile(
+                    title: Text(station.name),
+                    subtitle: Text('Країна: ${station.country}'),
+                    onTap: () {
+                      // Додаткові дії при натисканні на станцію
+                      print('Вибрана станція: ${station.name}');
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
